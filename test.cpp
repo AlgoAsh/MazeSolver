@@ -22,7 +22,17 @@ struct Node {
     Node(int _x, int _y) : x(_x), y(_y) {}
 };
 
+void printMaze() {
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLS; j++) {
+            cout << maze[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
 bool bfs(int startX, int startY) {
+
     queue<Node> q;
     q.push(Node(startX, startY));
 
@@ -51,12 +61,19 @@ bool bfs(int startX, int startY) {
             path.push_back({x, y});  // Include the start position
             reverse(path.begin(), path.end());  
 
+            for (const auto &p : path) {
+                if (maze[p.first][p.second] != 'S' && maze[p.first][p.second] != 'E') {
+                    maze[p.first][p.second] = '~';  // Mark the path
+                }
+            }
+
             //Display the path
             cout << "Path taken: ";
             for (const auto &p : path) { 
                 cout << "(" << p.first << "," << p.second << ") ";
             }
             cout << endl;
+            printMaze(); 
             return true;
         }
 
@@ -80,6 +97,9 @@ bool bfs(int startX, int startY) {
 }
 
 int main() {
+    cout<<"Original Maze!"<< endl;
+    printMaze();
+    cout<<"-----------------------------"<<endl;
     bfs(0, 0);  // Start BFS from 'S'
     return 0;
 }
