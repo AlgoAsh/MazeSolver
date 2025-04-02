@@ -1,0 +1,4 @@
+maze5 - 1,0
+maze2 - 2,5
+maze3 - 1,1
+maze4 - 1,1
