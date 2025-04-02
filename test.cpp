@@ -1,21 +1,16 @@
 #include <iostream>
+#include <fstream>
 #include <queue>
 #include <vector>
 #include <tuple>
 #include <algorithm>
 using namespace std;
 
-const int ROWS = 5, COLS = 5;
-char maze[ROWS][COLS] = {
-    {'S', '.', '.', '#', '.'},
-    {'#', '#', '.', '#', '.'},
-    {'.', '.', '.', '.', '.'},
-    {'.', '#', '#', '#', '.'},
-    {'.', '.', '.', '.', 'E'}
-};
+vector<vector<char>> maze;
+int ROWS, COLS;
 
 int dx[] = {0, 0, 1, -1};  // Right, Left, Down, Up
-int dy[] = {1, -1, 0, 0};  
+int dy[] = {1, -1, 0, 0};
 
 struct Node {
     int x, y;
@@ -23,22 +18,21 @@ struct Node {
 };
 
 void printMaze() {
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            cout << maze[i][j] << " ";
+    for (const auto &row : maze) {
+        for (char cell : row) {
+            cout << cell << " ";
         }
         cout << endl;
     }
 }
 
 bool bfs(int startX, int startY) {
-
     queue<Node> q;
     q.push(Node(startX, startY));
 
-    bool visited[ROWS][COLS] = {false};  
-    pair<int, int> parent[ROWS][COLS];  
-    visited[startX][startY] = true;  
+    vector<vector<bool>> visited(ROWS, vector<bool>(COLS, false));
+    vector<vector<pair<int, int>>> parent(ROWS, vector<pair<int, int>>(COLS, {-1, -1}));
+    visited[startX][startY] = true;
 
     int nodesExplored = 0;  
 
@@ -51,29 +45,27 @@ bool bfs(int startX, int startY) {
             cout << "Path found!\n";
             cout << "Nodes explored: " << nodesExplored << endl;
 
-            //Backtrack to find the path
             vector<pair<int, int>> path;
             int x = current.x, y = current.y;
-            while (maze[x][y] != 'S') {
+            while (!(x == startX && y == startY)) {
                 path.push_back({x, y});
-                tie(x, y) = parent[x][y];  // Now move to the parent node
+                tie(x, y) = parent[x][y];
             }
-            path.push_back({x, y});  // Include the start position
-            reverse(path.begin(), path.end());  
+            path.push_back({x, y});
+            reverse(path.begin(), path.end());
 
             for (const auto &p : path) {
                 if (maze[p.first][p.second] != 'S' && maze[p.first][p.second] != 'E') {
-                    maze[p.first][p.second] = '~';  // Mark the path
+                    maze[p.first][p.second] = '~';
                 }
             }
 
-            //Display the path
             cout << "Path taken: ";
-            for (const auto &p : path) { 
+            for (const auto &p : path) {
                 cout << "(" << p.first << "," << p.second << ") ";
             }
             cout << endl;
-            printMaze(); 
+            printMaze();
             return true;
         }
 
@@ -81,12 +73,10 @@ bool bfs(int startX, int startY) {
             int nx = current.x + dx[i];
             int ny = current.y + dy[i];
 
-            if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS &&
-                maze[nx][ny] != '#' && !visited[nx][ny]) {
-
+            if (nx >= 0 && nx < ROWS && ny >= 0 && ny < COLS && maze[nx][ny] != '#' && !visited[nx][ny]) {
                 q.push(Node(nx, ny));
                 visited[nx][ny] = true;
-                parent[nx][ny] = {current.x, current.y};  // Store the parent
+                parent[nx][ny] = {current.x, current.y};
             }
         }
     }
@@ -96,10 +86,48 @@ bool bfs(int startX, int startY) {
     return false;
 }
 
+bool loadMaze(const string &filename) {
+    ifstream file(filename);
+    if (!file) {
+        cerr << "Error: Could not open file " << filename << endl;
+        return false;
+    }
+
+    vector<vector<char>> tempMaze;
+    string line;
+    
+    while (getline(file, line)) {
+        if (!line.empty()) {
+            tempMaze.push_back(vector<char>(line.begin(), line.end()));
+        }
+    }
+
+    file.close();
+
+    if (tempMaze.empty()) {
+        cerr << "Error: Maze file is empty!" << endl;
+        return false;
+    }
+
+    // Set global ROWS and COLS
+    ROWS = tempMaze.size();
+    COLS = tempMaze[0].size();
+    
+    // Assign the dynamically loaded maze
+    maze = tempMaze;
+
+    return true;
+}
+
 int main() {
-    cout<<"Original Maze!"<< endl;
+    string filename = "maze/maze3.txt";
+    if (!loadMaze(filename)) {
+        return 1;
+    }
+
+    cout << "Original Maze:\n";
     printMaze();
-    cout<<"-----------------------------"<<endl;
-    bfs(0, 0);  // Start BFS from 'S'
-    return 0;
+    cout << "-----------------------------\n";
+    bfs(1,1);
+    return 0;   
 }
