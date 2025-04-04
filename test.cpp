@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <chrono>
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
@@ -156,7 +157,7 @@ bool loadMaze(const string &filename) {
 }
 
 int main() {
-    string filename = "maze/maze3.txt";
+    string filename = "maze/maze2.txt";
     if (!loadMaze(filename)) {
         return 1;
     }
@@ -167,9 +168,13 @@ int main() {
     
     estimateBFSMemoryUsage(ROWS, COLS);
     size_t memBefore = getCurrentMemoryUsage();
-    bfs(1, 1);
+    auto startTime = chrono::high_resolution_clock::now();
+    bfs(2,5);
+    auto endTime = chrono::high_resolution_clock::now();
     size_t memAfter = getCurrentMemoryUsage();
 
     cout << "Memory used (system reported): " << (memAfter - memBefore) << " KB\n";
+    auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
+    cout << "Execution Time: " << duration << " ms" << endl;
     return 0;   
 }
