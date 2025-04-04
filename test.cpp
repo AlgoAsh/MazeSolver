@@ -5,6 +5,7 @@
 #include <tuple>
 #include <algorithm>
 #include <chrono>
+#include <thread> 
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
@@ -28,6 +29,7 @@ size_t getCurrentMemoryUsage() {
 using namespace std;
 
 vector<vector<char>> maze;
+vector<vector<char>> mazeCopy;
 int ROWS, COLS;
 
 int dx[] = {0, 0, 1, -1};  // Right, Left, Down, Up
@@ -38,10 +40,13 @@ struct Node {
     Node(int _x, int _y) : x(_x), y(_y) {}
 };
 
-void printMaze() {
-    for (const auto &row : maze) {
+void printMaze(vector<vector<char>> input) {
+    for (const auto &row : input) {
         for (char cell : row) {
-            cout << cell << " ";
+            if (cell == '~') std::cout << "\033[1;32m~\033[0m ";
+            //if (cell == '.') std::cout << "\033[1;31m~\033[0m ";
+            else 
+                cout << cell << " ";
         }
         cout << endl;
     }
@@ -59,9 +64,15 @@ void estimateBFSMemoryUsage(int rows, int cols, int estimatedQueueSize = 1000) {
     cout << "Queue (approx)  : " << queueMem / 1024.0 << " KB\n";
     cout << "-------------------------------\n";
     cout << "Total Estimate  : " << total / 1024.0 << " KB\n";
-    cout << "--------------------------------\n\n";
+    cout << "--------------------------------\n";
 }
-
+void clearScreen() {
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+    }
 
 bool bfs(int startX, int startY) {
     queue<Node> q;
@@ -94,6 +105,10 @@ bool bfs(int startX, int startY) {
             for (const auto &p : path) {
                 if (maze[p.first][p.second] != 'S' && maze[p.first][p.second] != 'E') {
                     maze[p.first][p.second] = '~';
+                    clearScreen();
+                    printMaze(maze);
+                    //std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
                 }
             }
 
@@ -102,7 +117,7 @@ bool bfs(int startX, int startY) {
                 cout << "(" << p.first << "," << p.second << ") ";
             }
             cout << endl;
-            printMaze();
+            //printMaze(maze);
             return true;
         }
 
@@ -114,8 +129,18 @@ bool bfs(int startX, int startY) {
                 q.push(Node(nx, ny));
                 visited[nx][ny] = true;
                 parent[nx][ny] = {current.x, current.y};
+
+                // Animate step
+                if (maze[nx][ny] != 'E') maze[nx][ny] = ' '; // Mark explored node
+                //clearScreen();
+                //printMaze();
+                //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+ // adjust speed here
+                visited[nx][ny] = true;
+                parent[nx][ny] = {current.x, current.y};
             }
         }
+        
     }
 
     cout << "No path found!" << endl;
@@ -157,24 +182,24 @@ bool loadMaze(const string &filename) {
 }
 
 int main() {
-    string filename = "maze/maze2.txt";
+    string filename = "maze/maze5.txt";
     if (!loadMaze(filename)) {
         return 1;
     }
-
-    cout << "Original Maze:\n";
-    printMaze();
-    cout << "-----------------------------\n";
-    
+    mazeCopy = maze;
+        
     estimateBFSMemoryUsage(ROWS, COLS);
     size_t memBefore = getCurrentMemoryUsage();
     auto startTime = chrono::high_resolution_clock::now();
-    bfs(2,5);
+    bfs(1,0);
     auto endTime = chrono::high_resolution_clock::now();
     size_t memAfter = getCurrentMemoryUsage();
-
+    estimateBFSMemoryUsage(ROWS, COLS);
     cout << "Memory used (system reported): " << (memAfter - memBefore) << " KB\n";
     auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
     cout << "Execution Time: " << duration << " ms" << endl;
+    cout << "Original Maze:\n";
+    printMaze(mazeCopy);
+    cout << "-----------------------------\n";
     return 0;   
 }
