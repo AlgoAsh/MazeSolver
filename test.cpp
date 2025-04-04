@@ -4,6 +4,26 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+
+size_t getCurrentMemoryUsage() {
+    PROCESS_MEMORY_COUNTERS memInfo;
+    GetProcessMemoryInfo(GetCurrentProcess(), &memInfo, sizeof(memInfo));
+    return memInfo.WorkingSetSize / 1024; // Returns memory in KB
+}
+
+#else
+#include <sys/resource.h>
+
+size_t getCurrentMemoryUsage() {
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    return usage.ru_maxrss; // Returns memory in KB on most Unix-like systems
+}
+#endif
+
 using namespace std;
 
 vector<vector<char>> maze;
@@ -25,6 +45,22 @@ void printMaze() {
         cout << endl;
     }
 }
+void estimateBFSMemoryUsage(int rows, int cols, int estimatedQueueSize = 1000) {
+    size_t visitedMem = rows * cols * sizeof(bool);
+    size_t parentMem = rows * cols * sizeof(pair<int, int>);
+    size_t queueMem = estimatedQueueSize * sizeof(Node);  // You can tweak estimatedQueueSize if needed
+
+    size_t total = visitedMem + parentMem + queueMem;
+
+    cout << "\n--- Estimated BFS Memory Usage ---\n";
+    cout << "Visited[][]     : " << visitedMem / 1024.0 << " KB\n";
+    cout << "Parent[][]      : " << parentMem / 1024.0 << " KB\n";
+    cout << "Queue (approx)  : " << queueMem / 1024.0 << " KB\n";
+    cout << "-------------------------------\n";
+    cout << "Total Estimate  : " << total / 1024.0 << " KB\n";
+    cout << "--------------------------------\n\n";
+}
+
 
 bool bfs(int startX, int startY) {
     queue<Node> q;
@@ -128,6 +164,12 @@ int main() {
     cout << "Original Maze:\n";
     printMaze();
     cout << "-----------------------------\n";
-    bfs(1,1);
+    
+    estimateBFSMemoryUsage(ROWS, COLS);
+    size_t memBefore = getCurrentMemoryUsage();
+    bfs(1, 1);
+    size_t memAfter = getCurrentMemoryUsage();
+
+    cout << "Memory used (system reported): " << (memAfter - memBefore) << " KB\n";
     return 0;   
 }
