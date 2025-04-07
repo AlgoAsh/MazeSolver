@@ -8,8 +8,8 @@
 
 using namespace std;
 
-const int ROWS = 10;  // Number of maze cells vertically
-const int COLS = 20;  // Number of maze cells horizontally
+int ROWS;  
+int COLS;  
 
 struct Cell {
     bool visited = false;
@@ -19,7 +19,7 @@ struct Cell {
     bool rightWall = true;
 };
 
-Cell maze[ROWS][COLS];
+vector<vector<Cell>> maze;
 
 // Directions: Up, Down, Left, Right
 int dx[] = {-1, 1, 0, 0};
@@ -110,9 +110,22 @@ void printMaze() {
     }
 }
 
+void inputSize() {
+    cout << "Enter the width : ";
+    cin >> COLS;
+    cout << "Enter the height : ";
+    cin >> ROWS;
+
+    maze.resize(ROWS, vector<Cell>(COLS)); // dynamic allocation
+}
+
 int main() {
-    srand(time(0));  // Seed randomness
-    generateMaze(0, 0);  // Generate from top-left corner
-    printMaze();         // Display the Maze
+    srand(time(0));
+
+    inputSize();
+
+    generateMaze(0, 0);
+    printMaze();
+
     return 0;
 }
