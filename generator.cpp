@@ -1,35 +1,17 @@
-#include <iostream>
-#include <vector>
-#include <stack>
-#include <cstdlib>
-#include <ctime>
-#include <algorithm>  // for shuffle
-#include <random>     // for default_random_engine
+#include "generator.h"
 
-using namespace std;
+Generator::Generator(int rows, int cols) {
+    ROWS = rows;
+    COLS = cols;
+    maze.resize(ROWS, vector<Cell>(COLS));
+}
 
-int ROWS;  
-int COLS;  
 
-struct Cell {
-    bool visited = false;
-    bool topWall = true;
-    bool bottomWall = true;
-    bool leftWall = true;
-    bool rightWall = true;
-};
-
-vector<vector<Cell>> maze;
-
-// Directions: Up, Down, Left, Right
-int dx[] = {-1, 1, 0, 0};
-int dy[] = {0, 0, -1, 1};
-
-bool isValid(int x, int y) {
+bool Generator::isValid(int x, int y) {
     return (x >= 0 && x < ROWS && y >= 0 && y < COLS && !maze[x][y].visited);
 }
 
-void removeWall(Cell &current, Cell &next, int dir) {
+void Generator::removeWall(Cell &current, Cell &next, int dir) {
     if (dir == 0) { // Up
         current.topWall = false;
         next.bottomWall = false;
@@ -45,7 +27,7 @@ void removeWall(Cell &current, Cell &next, int dir) {
     }
 }
 
-void generateMaze(int startX, int startY) {
+void Generator::generateMaze(int startX, int startY) {
     stack<pair<int, int>> stk;
     stk.push({startX, startY});
     maze[startX][startY].visited = true;
@@ -59,24 +41,23 @@ void generateMaze(int startX, int startY) {
 
         bool moved = false;
         for (int dir : dirs) {
-            int nx = x + dx[dir];
-            int ny = y + dy[dir];
+            int nx = x + (dir == 2 ? -1 : dir == 3 ? 1 : 0);
+            int ny = y + (dir == 0 ? -1 : dir == 1 ? 1 : 0);
 
             if (isValid(nx, ny)) {
                 removeWall(maze[x][y], maze[nx][ny], dir);
-                maze[nx][ny].visited = true;
                 stk.push({nx, ny});
+                maze[nx][ny].visited = true;
                 moved = true;
                 break;
             }
         }
-
         if (!moved)
             stk.pop();
     }
 }
 
-void printMaze() {
+void Generator::printMaze() {
     int displayRows = ROWS * 2 + 1;
     int displayCols = COLS * 2 + 1;
 
@@ -108,24 +89,4 @@ void printMaze() {
         }
         cout << endl;
     }
-}
-
-void inputSize() {
-    cout << "Enter the width : ";
-    cin >> COLS;
-    cout << "Enter the height : ";
-    cin >> ROWS;
-
-    maze.resize(ROWS, vector<Cell>(COLS)); // dynamic allocation
-}
-
-int main() {
-    srand(time(0));
-
-    inputSize();
-
-    generateMaze(0, 0);
-    printMaze();
-
-    return 0;
 }
