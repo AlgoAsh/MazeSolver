@@ -17,7 +17,7 @@ MazeSolver is a C++ project that tests and compares various pathfinding algorith
   - A* Algorithm
   - Dijkstra's Algorithm
 - CLI Interface for interaction
-- Windows-based console application
+- Cross-platform compatible
 
 ---
 
