@@ -91,34 +91,47 @@ int main() {
     else if(choice == 2){
     srand(time(0));
 
-    cout<<"Enter the width and height of maze : " ;
+    cout<<"Enter the height and width of maze : " ;
     int w,h;
-    cin>>w>>h;
-    Generator g(w,h);
-
-    g.generateMaze(0, 0);
-    g.printMaze();
-    // Fix here between cell struct and 2D vector of char conflict
-    // int t1,t2;
-    // cout<<"Enter the coordinates of start(s) position index[row][col] : ";
-    // cin >> t1 >> t2;
+    cin>>h>>w;
+    Generator g(h,w);
     
-    // Solver s;
-    // s.maze= g.maze;
-    // s.mazeCopy = s.maze; 
-    // s.estimateBFSMemoryUsage(h, w);
-    // size_t memBefore = s.getCurrentMemoryUsage();
-    // auto startTime = chrono::high_resolution_clock::now();
-    // s.bfs(t1,t2);
-    // auto endTime = chrono::high_resolution_clock::now();
-    // size_t memAfter = s.getCurrentMemoryUsage();
-    // s.estimateBFSMemoryUsage(s.ROWS, s.COLS);
-    // cout << "Memory used (system reported): " << (memAfter - memBefore) << " KB\n";
-    // auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
-    // cout << "Execution Time: " << duration << " ms" << endl;
-    // cout << "Original Maze:\n";
-    // s.printMaze(s.mazeCopy);
-    // cout << "-----------------------------\n";
+    g.generateMaze(1,1);
+    g.printMaze();
+    g.saveMazeToFile("maze/RecentlyGeneratedMaze.txt");
+    
+    cout<<"Enter 1 to run the test else anything to continue : ";
+    int x;
+    cin>>x;
+    if(x!=1)
+        {
+            cout<<"<<<<<<<<<<<<<<<Program Terminates>>>>>>>>>>>>>>>";
+            return 0;
+        }
+    Solver s;
+
+    //string filename = "maze/maze5.txt";
+    string filename = "maze/RecentlyGeneratedMaze.txt";
+    if (!s.loadMaze(filename)) {
+        cout<<"Error in loading the maze!";
+        return 1;
+    }
+    s.maze = g.maze;
+    s.mazeCopy = s.maze;
+        
+    s.estimateBFSMemoryUsage(s.ROWS, s.COLS);
+    size_t memBefore = s.getCurrentMemoryUsage();
+    auto startTime = chrono::high_resolution_clock::now();
+    s.bfs(1,1);
+    auto endTime = chrono::high_resolution_clock::now();
+    size_t memAfter = s.getCurrentMemoryUsage();
+    s.estimateBFSMemoryUsage(s.ROWS, s.COLS);
+    cout << "Memory used (system reported): " << (memAfter - memBefore) << " KB\n";
+    auto duration = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count();
+    cout << "Execution Time: " << duration << " ms" << endl;
+    cout << "Original Maze:\n";
+    s.printMaze(s.mazeCopy);
+    cout << "-----------------------------\n";
     }
     else
     {

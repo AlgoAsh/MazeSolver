@@ -1,92 +1,113 @@
 #include "generator.h"
-
+#include <iostream>
+#include <random>
+#include <algorithm>
+using namespace std;
 Generator::Generator(int rows, int cols) {
-    ROWS = rows;
-    COLS = cols;
-    maze.resize(ROWS, vector<Cell>(COLS));
-}
+    // Ensure odd dimensions for proper maze generation
+    ROWS = (rows % 2 == 0) ? rows + 1 : rows;
+    COLS = (cols % 2 == 0) ? cols + 1 : cols;
 
+    maze.resize(ROWS, std::vector<char>(COLS, '#'));  // Initialize with walls
+}
 
 bool Generator::isValid(int x, int y) {
-    return (x >= 0 && x < ROWS && y >= 0 && y < COLS && !maze[x][y].visited);
-}
-
-void Generator::removeWall(Cell &current, Cell &next, int dir) {
-    if (dir == 0) { // Up
-        current.topWall = false;
-        next.bottomWall = false;
-    } else if (dir == 1) { // Down
-        current.bottomWall = false;
-        next.topWall = false;
-    } else if (dir == 2) { // Left
-        current.leftWall = false;
-        next.rightWall = false;
-    } else if (dir == 3) { // Right
-        current.rightWall = false;
-        next.leftWall = false;
-    }
+    return (x > 0 && x < ROWS - 1 && y > 0 && y < COLS - 1 && maze[x][y] == '#');
 }
 
 void Generator::generateMaze(int startX, int startY) {
-    stack<pair<int, int>> stk;
+    std::random_device rd;
+    std::mt19937 g(rd());
+
+    std::stack<std::pair<int, int>> stk;
     stk.push({startX, startY});
-    maze[startX][startY].visited = true;
+    maze[startX][startY] = 'S';  // Mark Start
+
+    std::vector<std::pair<int, int>> directions = {{-2, 0}, {2, 0}, {0, -2}, {0, 2}};
 
     while (!stk.empty()) {
-        int x = stk.top().first;
-        int y = stk.top().second;
+        auto curr = stk.top();
+        int x = curr.first;
+        int y = curr.second;
 
-        vector<int> dirs = {0, 1, 2, 3};
-        shuffle(dirs.begin(), dirs.end(), default_random_engine(rand()));
+        std::vector<std::pair<int, int>> neighbors;
 
-        bool moved = false;
-        for (int dir : dirs) {
-            int nx = x + (dir == 2 ? -1 : dir == 3 ? 1 : 0);
-            int ny = y + (dir == 0 ? -1 : dir == 1 ? 1 : 0);
+        for (auto dir : directions) {
+            int nx = x + dir.first;
+            int ny = y + dir.second;
 
-            if (isValid(nx, ny)) {
-                removeWall(maze[x][y], maze[nx][ny], dir);
-                stk.push({nx, ny});
-                maze[nx][ny].visited = true;
-                moved = true;
-                break;
+            if (isValid(nx, ny))
+                neighbors.push_back({nx, ny});
+        }
+
+        if (!neighbors.empty()) {
+            std::shuffle(neighbors.begin(), neighbors.end(), g);
+            auto next = neighbors[0];
+            int nx = next.first;
+            int ny = next.second;
+
+            // Remove wall between (x, y) and (nx, ny)
+            maze[(x + nx) / 2][(y + ny) / 2] = ' ';
+            maze[nx][ny] = ' ';
+
+            stk.push({nx, ny});
+        } else {
+            stk.pop();
+        }
+    }
+
+    // Mark End Point at bottom-right open cell
+    for (int i = ROWS - 2; i >= 0; --i) {
+        for (int j = COLS - 2; j >= 0; --j) {
+            if (maze[i][j] == ' ') {
+                maze[i][j] = 'E';
+                return;
             }
         }
-        if (!moved)
-            stk.pop();
     }
 }
 
 void Generator::printMaze() {
-    int displayRows = ROWS * 2 + 1;
-    int displayCols = COLS * 2 + 1;
-
-    vector<vector<char>> display(displayRows, vector<char>(displayCols, '#'));
-
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            int x = i * 2 + 1;
-            int y = j * 2 + 1;
-            display[x][y] = ' ';
-
-            if (!maze[i][j].topWall)
-                display[x - 1][y] = ' ';
-            if (!maze[i][j].bottomWall)
-                display[x + 1][y] = ' ';
-            if (!maze[i][j].leftWall)
-                display[x][y - 1] = ' ';
-            if (!maze[i][j].rightWall)
-                display[x][y + 1] = ' ';
-        }
-    }
-
-    display[1][1] = 'S';  // Start
-    display[displayRows - 2][displayCols - 2] = 'E';  // End
-
-    for (int i = 0; i < displayRows; i++) {
-        for (int j = 0; j < displayCols; j++) {
-            cout << display[i][j];
-        }
-        cout << endl;
+    for (const auto& row : maze) {
+        for (char cell : row)
+            std::cout << cell;
+        std::cout << '\n';
     }
 }
+#include <fstream>  // for file operations
+
+void Generator::saveMazeToFile(const std::string& filename) {
+    std::ofstream outFile(filename);
+
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing.\n";
+        return;
+    }
+
+    for (const auto& row : maze) {
+        for (const auto& cell : row) {
+            outFile << cell;
+        }
+        outFile << '\n';
+    }
+
+    outFile.close();
+    std::cout << "Maze saved successfully to " << filename << "\n";
+}
+
+
+// int main() {
+//     int rows, cols;
+//     cout << "Enter Maze Dimensions (rows cols): ";
+//     cin >> rows >> cols;
+
+//     Generator gen(rows, cols);
+
+//     // Start always at (1, 1)
+//     gen.generateMaze(1, 1);
+
+//     cout << "\nGenerated Maze:\n";
+//     gen.printMaze();
+
+//     return 0;
+// }
