@@ -59,7 +59,7 @@ cd MazeSolver
 Use any C++ compiler:
 
 ```bash
-g++ main.cpp Generator.cpp Solver.cpp -o MazeSolver
+g++ main.cpp Generator.cpp Solver.cpp -o main
 ```
 
 ---
